@@ -57,7 +57,7 @@ receivers:
 	require.Len(t, c.Receivers, 1)
 	require.Len(t, c.Receivers[0].TelegramConfigs, 1)
 
-	require.Equal(t, "https://api.telegram.org", c.Receivers[0].TelegramConfigs[0].APIUrl.String())
+	require.Equal(t, "https://api.telegram.org", c.Receivers[0].TelegramConfigs[0].APIURL.String())
 	require.Equal(t, commoncfg.Secret("secret"), c.Receivers[0].TelegramConfigs[0].BotToken)
 	require.Equal(t, int64(1234), c.Receivers[0].TelegramConfigs[0].ChatID)
 	require.Equal(t, 1357, c.Receivers[0].TelegramConfigs[0].MessageThreadID)
@@ -75,7 +75,7 @@ func TestTelegramRetry(t *testing.T) {
 	notifier, err := New(
 		&config.TelegramConfig{
 			HTTPConfig: &commoncfg.HTTPClientConfig{},
-			APIUrl:     &fakeURL,
+			APIURL:     &fakeURL,
 		},
 		test.CreateTmpl(t),
 		promslog.NewNopLogger(),
@@ -181,7 +181,7 @@ func TestTelegramNotify(t *testing.T) {
 			defer srv.Close()
 			u, _ := url.Parse(srv.URL)
 
-			tc.cfg.APIUrl = &amcommoncfg.URL{URL: u}
+			tc.cfg.APIURL = &amcommoncfg.URL{URL: u}
 
 			notifier, err := New(&tc.cfg, test.CreateTmpl(t), promslog.NewNopLogger())
 			require.NoError(t, err)

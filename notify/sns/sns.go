@@ -152,7 +152,7 @@ func (n *Notifier) createSNSClient(ctx context.Context, tmpl func(string) string
 	}
 
 	// Resolve the API URL from the template.
-	apiURL := tmpl(n.conf.APIUrl)
+	apiURL := tmpl(n.conf.APIURL)
 	if *tmplErr != nil {
 		return nil, notify.NewErrorWithReason(notify.ClientErrorReason, fmt.Errorf("execute 'api_url' template: %w", *tmplErr))
 	}

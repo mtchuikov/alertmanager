@@ -22,6 +22,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/google/uuid"
 	commoncfg "github.com/prometheus/common/config"
 
 	amcommoncfg "github.com/prometheus/alertmanager/config/common"
@@ -179,6 +180,7 @@ var (
 		Message: `{{ template "sns.default.message" . }}`,
 	}
 
+	// DefaultTelegramConfig defines default values for Telegram configurations.
 	DefaultTelegramConfig = TelegramConfig{
 		NotifierConfig: amcommoncfg.NotifierConfig{
 			VSendResolved: true,
@@ -188,6 +190,7 @@ var (
 		ParseMode:            "HTML",
 	}
 
+	// DefaultMSTeamsConfig defines default values for MSTeams configurations.
 	DefaultMSTeamsConfig = MSTeamsConfig{
 		NotifierConfig: amcommoncfg.NotifierConfig{
 			VSendResolved: true,
@@ -197,6 +200,7 @@ var (
 		Text:    `{{ template "msteams.default.text" . }}`,
 	}
 
+	// DefaultMSTeamsV2Config defines default values for MSTeamsV2 configurations.
 	DefaultMSTeamsV2Config = MSTeamsV2Config{
 		NotifierConfig: amcommoncfg.NotifierConfig{
 			VSendResolved: true,
@@ -205,6 +209,7 @@ var (
 		Text:  `{{ template "msteamsv2.default.text" . }}`,
 	}
 
+	// DefaultJiraConfig defines default values for Jira configurations.
 	DefaultJiraConfig = JiraConfig{
 		NotifierConfig: amcommoncfg.NotifierConfig{
 			VSendResolved: true,
@@ -219,6 +224,7 @@ var (
 		Priority: `{{ template "jira.default.priority" . }}`,
 	}
 
+	// DefaultMattermostConfig defines default values for Mattermost configurations.
 	DefaultMattermostConfig = MattermostConfig{
 		NotifierConfig: amcommoncfg.NotifierConfig{
 			VSendResolved: true,
@@ -229,6 +235,15 @@ var (
 		Title:     `{{ template "mattermost.default.title" . }}`,
 		TitleLink: `{{ template "mattermost.default.titlelink" . }}`,
 		Fallback:  `{{ template "mattermost.default.fallback" . }}`,
+	}
+
+	// DefaultDionConfig defines default values for Dion configurations.
+	DefaultDionConfig = DionConfig{
+		NotifierConfig: amcommoncfg.NotifierConfig{
+			VSendResolved: true,
+		},
+		Message:   `{{ template "dion.default.message" . }}`,
+		ParseMode: "HTML",
 	}
 )
 
@@ -900,7 +915,7 @@ type SNSConfig struct {
 
 	HTTPConfig *commoncfg.HTTPClientConfig `yaml:"http_config,omitempty" json:"http_config,omitempty"`
 
-	APIUrl      string            `yaml:"api_url,omitempty" json:"api_url,omitempty"`
+	APIURL      string            `yaml:"api_url,omitempty" json:"api_url,omitempty"`
 	Sigv4       sigv4.SigV4Config `yaml:"sigv4" json:"sigv4"`
 	TopicARN    string            `yaml:"topic_arn,omitempty" json:"topic_arn,omitempty"`
 	PhoneNumber string            `yaml:"phone_number,omitempty" json:"phone_number,omitempty"`
@@ -929,7 +944,7 @@ type TelegramConfig struct {
 
 	HTTPConfig *commoncfg.HTTPClientConfig `yaml:"http_config,omitempty" json:"http_config,omitempty"`
 
-	APIUrl               *amcommoncfg.URL `yaml:"api_url" json:"api_url,omitempty"`
+	APIURL               *amcommoncfg.URL `yaml:"api_url" json:"api_url,omitempty"`
 	BotToken             commoncfg.Secret `yaml:"bot_token,omitempty" json:"token,omitempty"`
 	BotTokenFile         string           `yaml:"bot_token_file,omitempty" json:"token_file,omitempty"`
 	ChatID               int64            `yaml:"chat_id,omitempty" json:"chat,omitempty"`
@@ -948,13 +963,13 @@ func (c *TelegramConfig) UnmarshalYAML(unmarshal func(any) error) error {
 		return err
 	}
 	if c.BotToken != "" && c.BotTokenFile != "" {
-		return errors.New("at most one of bot_token & bot_token_file must be configured")
+		return errors.New("at most one of bot_token & bot_token_file must be configured on telegram_config")
 	}
 	if c.ChatID == 0 && c.ChatIDFile == "" {
 		return errors.New("missing chat_id or chat_id_file on telegram_config")
 	}
 	if c.ChatID != 0 && c.ChatIDFile != "" {
-		return errors.New("at most one of chat_id & chat_id_file must be configured")
+		return errors.New("at most one of chat_id & chat_id_file must be configured on telegram_config")
 	}
 	if c.ParseMode != "" &&
 		c.ParseMode != "Markdown" &&
@@ -1252,6 +1267,7 @@ type MattermostConfig struct {
 }
 
 // UnmarshalYAML implements the yaml.Unmarshaler interface.
+// See https://faq.dion.vc/ru/users/chat/chatbots for more information.
 func (c *MattermostConfig) UnmarshalYAML(unmarshal func(any) error) error {
 	*c = DefaultMattermostConfig
 	type plain MattermostConfig
@@ -1263,5 +1279,49 @@ func (c *MattermostConfig) UnmarshalYAML(unmarshal func(any) error) error {
 		return errors.New("at most one of webhook_url & webhook_url_file must be configured")
 	}
 
+	return nil
+}
+
+// DionConfig configures notifications via Dion.
+type DionConfig struct {
+	amcommoncfg.NotifierConfig `yaml:",inline" json:",inline"`
+
+	HTTPConfig *commoncfg.HTTPClientConfig `yaml:"http_config,omitempty" json:"http_config,omitempty"`
+
+	APIURL          *amcommoncfg.URL `yaml:"api_url,omitempty" json:"api_url,omitempty"`
+	BotEmail        commoncfg.Secret `yaml:"bot_email,omitempty" json:"bot_email,omitempty"`
+	BotEmailFile    string           `yaml:"bot_email_file,omitempty" json:"bot_email_file,omitempty"`
+	BotPassword     commoncfg.Secret `yaml:"bot_password,omitempty" json:"bot_password,omitempty"`
+	BotPasswordFile string           `yaml:"bot_password_file,omitempty" json:"bot_password_file,omitempty"`
+	ChatID          uuid.UUID        `yaml:"chat_id,omitempty" json:"chat,omitempty"`
+	ChatIDFile      string           `yaml:"chat_id_file,omitempty" json:"chat_file,omitempty"`
+	Message         string           `yaml:"message,omitempty" json:"message,omitempty"`
+	ParseMode       string           `yaml:"parse_mode,omitempty" json:"parse_mode,omitempty"`
+}
+
+func (c *DionConfig) UnmarshalYAML(unmarshal func(any) error) error {
+	*c = DefaultDionConfig
+	type plain DionConfig
+	if err := unmarshal((*plain)(c)); err != nil {
+		return err
+	}
+	if c.BotEmail != "" && c.BotEmailFile != "" {
+		return errors.New("at most one of bot_email & bot_email_file must be configured on dion_config")
+	}
+	if c.BotPassword != "" && c.BotPasswordFile != "" {
+		return errors.New("at most one of bot_password & bot_password_file must be configured on dion_config")
+	}
+	if c.ChatID == uuid.Nil && c.ChatIDFile == "" {
+		return errors.New("missing chat_id or chat_id_file on dion_config")
+	}
+	if c.ChatID != uuid.Nil && c.ChatIDFile != "" {
+		return errors.New("at most one of chat_id & chat_id_file must be configured on dion_config")
+	}
+	if c.ParseMode != "" &&
+		c.ParseMode != "Markdown" &&
+		c.ParseMode != "MarkdownV2" &&
+		c.ParseMode != "HTML" {
+		return errors.New("unknown parse_mode on dion_config, must be Markdown, MarkdownV2, HTML or empty string")
+	}
 	return nil
 }

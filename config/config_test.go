@@ -614,9 +614,10 @@ func TestEmptyFieldsAndRegex(t *testing.T) {
 			OpsGenieAPIURL:   amcommoncfg.MustParseURL("https://api.opsgenie.com/"),
 			WeChatAPIURL:     amcommoncfg.MustParseURL("https://qyapi.weixin.qq.com/cgi-bin/"),
 			VictorOpsAPIURL:  amcommoncfg.MustParseURL("https://alert.victorops.com/integrations/generic/20131114/alert/"),
-			TelegramAPIUrl:   amcommoncfg.MustParseURL("https://api.telegram.org"),
+			TelegramAPIURL:   amcommoncfg.MustParseURL("https://api.telegram.org"),
 			WebexAPIURL:      amcommoncfg.MustParseURL("https://webexapis.com/v1/messages"),
 			RocketchatAPIURL: amcommoncfg.MustParseURL("https://open.rocket.chat/"),
+			DionAPIURL:       amcommoncfg.MustParseURL("https://bots-api.dion.vc"),
 		},
 
 		Templates: []string{

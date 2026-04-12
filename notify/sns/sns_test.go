@@ -99,10 +99,10 @@ func TestNotifyWithInvalidTemplate(t *testing.T) {
 			},
 		},
 		{
-			title:  "with invalid APIUrl template",
+			title:  "with invalid APIURL template",
 			errMsg: "execute 'api_url' template",
 			updateCfg: func(cfg *config.SNSConfig) {
-				cfg.APIUrl = "{{ template \"unknown_template\" . }}"
+				cfg.APIURL = "{{ template \"unknown_template\" . }}"
 			},
 		},
 		{

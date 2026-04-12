@@ -22,6 +22,7 @@ import (
 
 	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/notify"
+	"github.com/prometheus/alertmanager/notify/dion"
 	"github.com/prometheus/alertmanager/notify/discord"
 	"github.com/prometheus/alertmanager/notify/email"
 	"github.com/prometheus/alertmanager/notify/incidentio"
@@ -117,6 +118,8 @@ func BuildReceiverIntegrations(nc config.Receiver, tmpl *template.Template, logg
 	for i, c := range nc.MattermostConfigs {
 		add("mattermost", i, c, func(l *slog.Logger) (notify.Notifier, error) { return mattermost.New(c, tmpl, l, httpOpts...) })
 	}
-
+	for i, c := range nc.DionConfigs {
+		add("dion", i, c, func(l *slog.Logger) (notify.Notifier, error) { return dion.New(c, tmpl, l, httpOpts...) })
+	}
 	return integrations, errs
 }

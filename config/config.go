@@ -216,6 +216,9 @@ func resolveFilepaths(baseDir string, cfg *Config) {
 		for _, cfg := range receiver.MattermostConfigs {
 			cfg.HTTPConfig.SetDirectory(baseDir)
 		}
+		for _, cfg := range receiver.DionConfigs {
+			cfg.HTTPConfig.SetDirectory(baseDir)
+		}
 	}
 }
 
@@ -348,6 +351,14 @@ func (c *Config) UnmarshalYAML(unmarshal func(any) error) error {
 
 	if c.Global.MattermostWebhookURL != nil && len(c.Global.MattermostWebhookURLFile) > 0 {
 		return errors.New("at most one of mattermost_webhook_url & mattermost_webhook_url_file must be configured")
+	}
+
+	if len(c.Global.DionBotEmail) > 0 && len(c.Global.DionBotEmailFile) > 0 {
+		return errors.New("at most one of dion_bot_email & dion_bot_email_file must be configured")
+	}
+
+	if len(c.Global.DionBotPassword) > 0 && len(c.Global.DionBotPasswordFile) > 0 {
+		return errors.New("at most one of dion_bot_password & dion_bot_password_file must be configured")
 	}
 
 	names := map[string]struct{}{}
@@ -526,7 +537,7 @@ func (c *Config) UnmarshalYAML(unmarshal func(any) error) error {
 				return errors.New("missing telegram config")
 			}
 			telegram.HTTPConfig = cmp.Or(telegram.HTTPConfig, c.Global.HTTPConfig)
-			telegram.APIUrl = cmp.Or(telegram.APIUrl, c.Global.TelegramAPIUrl)
+			telegram.APIURL = cmp.Or(telegram.APIURL, c.Global.TelegramAPIURL)
 			if telegram.BotToken == "" && len(telegram.BotTokenFile) == 0 {
 				if c.Global.TelegramBotToken == "" && len(c.Global.TelegramBotTokenFile) == 0 {
 					return errors.New("missing bot_token or bot_token_file on telegram_config")
@@ -612,6 +623,27 @@ func (c *Config) UnmarshalYAML(unmarshal func(any) error) error {
 				}
 				mattermost.WebhookURL = c.Global.MattermostWebhookURL
 				mattermost.WebhookURLFile = c.Global.MattermostWebhookURLFile
+			}
+		}
+		for _, dion := range rcv.DionConfigs {
+			if dion == nil {
+				return errors.New("missing dion config")
+			}
+			dion.HTTPConfig = cmp.Or(dion.HTTPConfig, c.Global.HTTPConfig)
+			dion.APIURL = cmp.Or(dion.APIURL, c.Global.DionAPIURL)
+			if len(dion.BotEmail) == 0 && len(dion.BotEmailFile) == 0 {
+				if len(c.Global.DionBotEmail) == 0 && len(c.Global.DionBotEmailFile) == 0 {
+					return errors.New("missing dion_bot_email or dion_bot_email_file on dion_config")
+				}
+				dion.BotEmail = c.Global.DionBotEmail
+				dion.BotEmailFile = c.Global.DionBotEmailFile
+			}
+			if len(dion.BotPassword) == 0 && len(dion.BotPasswordFile) == 0 {
+				if len(c.Global.DionBotPassword) == 0 && len(c.Global.DionBotPasswordFile) == 0 {
+					return errors.New("missing dion_bot_password or dion_bot_password_file on dion_config")
+				}
+				dion.BotPassword = c.Global.DionBotPassword
+				dion.BotPasswordFile = c.Global.DionBotPasswordFile
 			}
 		}
 
@@ -715,10 +747,11 @@ func DefaultGlobalConfig() GlobalConfig {
 		OpsGenieAPIURL:   amcommoncfg.MustParseURL("https://api.opsgenie.com/"),
 		WeChatAPIURL:     amcommoncfg.MustParseURL("https://qyapi.weixin.qq.com/cgi-bin/"),
 		VictorOpsAPIURL:  amcommoncfg.MustParseURL("https://alert.victorops.com/integrations/generic/20131114/alert/"),
-		TelegramAPIUrl:   amcommoncfg.MustParseURL("https://api.telegram.org"),
+		TelegramAPIURL:   amcommoncfg.MustParseURL("https://api.telegram.org"),
 		WebexAPIURL:      amcommoncfg.MustParseURL("https://webexapis.com/v1/messages"),
 		RocketchatAPIURL: amcommoncfg.MustParseURL("https://open.rocket.chat/"),
 		SlackAppURL:      amcommoncfg.MustParseURL("https://slack.com/api/chat.postMessage"),
+		DionAPIURL:       amcommoncfg.MustParseURL("https://bots-api.dion.vc"),
 	}
 }
 
@@ -827,7 +860,7 @@ type GlobalConfig struct {
 	VictorOpsAPIURL          *amcommoncfg.URL       `yaml:"victorops_api_url,omitempty" json:"victorops_api_url,omitempty"`
 	VictorOpsAPIKey          commoncfg.Secret       `yaml:"victorops_api_key,omitempty" json:"victorops_api_key,omitempty"`
 	VictorOpsAPIKeyFile      string                 `yaml:"victorops_api_key_file,omitempty" json:"victorops_api_key_file,omitempty"`
-	TelegramAPIUrl           *amcommoncfg.URL       `yaml:"telegram_api_url,omitempty" json:"telegram_api_url,omitempty"`
+	TelegramAPIURL           *amcommoncfg.URL       `yaml:"telegram_api_url,omitempty" json:"telegram_api_url,omitempty"`
 	TelegramBotToken         commoncfg.Secret       `yaml:"telegram_bot_token,omitempty" json:"telegram_bot_token,omitempty"`
 	TelegramBotTokenFile     string                 `yaml:"telegram_bot_token_file,omitempty" json:"telegram_bot_token_file,omitempty"`
 	WebexAPIURL              *amcommoncfg.URL       `yaml:"webex_api_url,omitempty" json:"webex_api_url,omitempty"`
@@ -838,6 +871,11 @@ type GlobalConfig struct {
 	RocketchatTokenIDFile    string                 `yaml:"rocketchat_token_id_file,omitempty" json:"rocketchat_token_id_file,omitempty"`
 	MattermostWebhookURL     *amcommoncfg.SecretURL `yaml:"mattermost_webhook_url,omitempty" json:"mattermost_webhook_url,omitempty"`
 	MattermostWebhookURLFile string                 `yaml:"mattermost_webhook_url_file,omitempty" json:"mattermost_webhook_url_file,omitempty"`
+	DionAPIURL               *amcommoncfg.URL       `yaml:"dion_api_url,omitempty" json:"dion_api_url,omitempty"`
+	DionBotEmail             commoncfg.Secret       `yaml:"dion_bot_email,omitempty" json:"dion_bot_email,omitempty"`
+	DionBotEmailFile         string                 `yaml:"dion_bot_email_file,omitempty" json:"dion_bot_email_file,omitempty"`
+	DionBotPassword          commoncfg.Secret       `yaml:"dion_bot_password,omitempty" json:"dion_bot_password,omitempty"`
+	DionBotPasswordFile      string                 `yaml:"dion_bot_password_file,omitempty" json:"dion_bot_password_file,omitempty"`
 }
 
 // UnmarshalYAML implements the yaml.Unmarshaler interface for GlobalConfig.
@@ -944,6 +982,7 @@ type Receiver struct {
 	JiraConfigs       []*JiraConfig       `yaml:"jira_configs,omitempty" json:"jira_configs,omitempty"`
 	RocketchatConfigs []*RocketchatConfig `yaml:"rocketchat_configs,omitempty" json:"rocketchat_configs,omitempty"`
 	MattermostConfigs []*MattermostConfig `yaml:"mattermost_configs,omitempty" json:"mattermost_configs,omitempty"`
+	DionConfigs       []*DionConfig       `yaml:"dion_configs,omitempty" json:"dion_configs,omitempty"`
 }
 
 // UnmarshalYAML implements the yaml.Unmarshaler interface for Receiver.

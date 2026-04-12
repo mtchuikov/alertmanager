@@ -127,9 +127,7 @@ global:
   [ wechat_api_secret_file: <string> ]
   [ wechat_api_corp_id: <string> ]
   [ telegram_api_url: <string> | default = "https://api.telegram.org" ]
-  # The default Telegram bot token. It is mutually exclusive with `telegram_bot_token_file`.
   [ telegram_bot_token: <secret> ]
-  # The default configuration to read the Telegram bot token from a file. It is mutually exclusive with `telegram_bot_token`.
   [ telegram_bot_token_file: <string> ]
   [ webex_api_url: <string> | default = "https://webexapis.com/v1/messages" ]
   [ mattermost_webhook_url: <secret> ]
@@ -757,6 +755,8 @@ Note: As part of lifting the past moratorium on new receivers it was agreed that
 name: <string>
 
 # Configurations for several notification integrations.
+dion_configs:
+  [ - <dion_config>, ... ]
 discord_configs:
   [ - <discord_config>, ... ]
 email_configs:
@@ -943,6 +943,47 @@ A `tls_config` allows configuring TLS connections.
 ## Receiver integration settings
 
 These settings allow configuring specific receiver integrations.
+
+### `<dion_config>`
+
+Dion notification are sent via [Dion Bot API](https://faq.dion.vc/ru/users/chat/chatbots). See [Dion's Bot API](https://faq.dion.vc/ru/users/chat/chatbots) documentation to learn how to configure a bot integration for a channel.
+
+```yaml
+# Whether to notify about resolved alerts.
+[ send_resolved: <boolean> | default = true ]
+
+# The Dion API URL i.e. https://bots-api.dion.vc.
+# If not specified, default API URL will be used.
+[ api_url: <string> | default = global.dion_api_url ]
+
+# Dion bot email. It is mutually exclusive with `bot_email_file`.
+[ bot_email: <secret> ]
+
+# Read the Dion email token from a file. It is mutually exclusive with `bot_email`.
+[ bot_email_file: <filepath> ]
+
+# Dion bot token. It is mutually exclusive with `bot_password_file`.
+[ bot_password: <secret> ]
+
+# Read the Dion bot token from a file. It is mutually exclusive with `bot_password`.
+[ bot_password_file: <filepath> ]
+
+# ID of the chat where to send the messages. It is mutually exclusive with `chat_id_file`.
+[ chat_id: <int> ]
+
+# Read the chat ID from a file. It is mutually exclusive with `chat_id`.
+[ chat_id_file: <filepath> ]
+
+# Message template.
+[ message: <tmpl_string> default = '{{ template "dion.default.message" .}}' ]
+
+# Parse mode for Dion message, supported values are MarkdownV2, Markdown, HTML and empty string for plain text.
+# If the message exceeds Dion's character limit, it will be truncated or replaced with a fallback message if parse_mode is set to HTML.
+[ parse_mode: <string> | default = "HTML" ]
+
+# The HTTP client's configuration.
+[ http_config: <http_config> | default = global.http_config ]
+```
 
 ### `<discord_config>`
 

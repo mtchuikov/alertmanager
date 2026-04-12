@@ -1097,7 +1097,7 @@ func TestTelegramConfiguration(t *testing.T) {
 bot_token: xyz
 bot_token_file: /file
 `,
-			expected: errors.New("at most one of bot_token & bot_token_file must be configured"),
+			expected: errors.New("at most one of bot_token & bot_token_file must be configured on telegram_config"),
 		},
 		{
 			name: "with bot_token and chat_id set - it succeeds",
@@ -1142,7 +1142,7 @@ bot_token: xyz
 chat_id: 123
 chat_id_file: /file
 `,
-			expected: errors.New("at most one of chat_id & chat_id_file must be configured"),
+			expected: errors.New("at most one of chat_id & chat_id_file must be configured on telegram_config"),
 		},
 		{
 			name: "with unknown parse_mode - it fails",
@@ -1164,7 +1164,6 @@ parse_mode: invalid
 		})
 	}
 }
-
 func newBoolPointer(b bool) *bool {
 	return &b
 }
