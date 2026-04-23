@@ -112,7 +112,7 @@ func (n *Notifier) Notify(ctx context.Context, alert ...*types.Alert) (bool, err
 	}
 	chatIDStr := chatID.String()
 
-	for attempt := 0; attempt < 2; attempt++ {
+	for attempt := range 2 {
 		token, err := n.getValidToken(ctx)
 		if err != nil {
 			return false, err
